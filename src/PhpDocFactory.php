@@ -16,7 +16,7 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use Psr\SimpleCache\CacheInterface;
 
-class Generator
+class PhpDocFactory
 {
     const CACHE_KEY_INDEX = '_BERLIOZ_PHPDOC';
     /** @var \Psr\SimpleCache\CacheInterface|null Cache */
@@ -31,7 +31,7 @@ class Generator
     private $_index;
 
     /**
-     * Generator constructor.
+     * PhpDocFactory constructor.
      *
      * @param null|\Psr\SimpleCache\CacheInterface $cacheManager
      * @param null|\Psr\Log\LoggerInterface        $logger
@@ -44,7 +44,7 @@ class Generator
     }
 
     /**
-     * Generator destructor.
+     * PhpDocFactory destructor.
      *
      * @throws \Psr\SimpleCache\InvalidArgumentException
      */
@@ -125,10 +125,10 @@ class Generator
     /**
      * Save index in cache.
      *
-     * @return \Berlioz\PhpDoc\Generator
+     * @return \Berlioz\PhpDoc\PhpDocFactory
      * @throws \Psr\SimpleCache\InvalidArgumentException
      */
-    private function saveIndex(): Generator
+    private function saveIndex(): PhpDocFactory
     {
         if (!is_null($this->cacheManager)) {
             $this->cacheManager->set(sprintf('%s_INDEX', static::CACHE_KEY_INDEX), $this->_index);
@@ -187,10 +187,10 @@ class Generator
      * @param string                   $name
      * @param \Berlioz\PhpDoc\Doc|null $value
      *
-     * @return \Berlioz\PhpDoc\Generator
+     * @return \Berlioz\PhpDoc\PhpDocFactory
      * @throws \Psr\SimpleCache\InvalidArgumentException
      */
-    private function saveDocToCache(string $name, ?Doc $value): Generator
+    private function saveDocToCache(string $name, ?Doc $value): PhpDocFactory
     {
         if (!is_null($this->cacheManager)) {
             $cacheKey = $this->getDocCacheName($name);

@@ -13,27 +13,27 @@
 namespace Berlioz\PhpDoc\Tests;
 
 use Berlioz\PhpDoc\Doc;
-use Berlioz\PhpDoc\Generator;
+use Berlioz\PhpDoc\PhpDocFactory;
 use Berlioz\PhpDoc\Parser;
 use Berlioz\PhpDoc\Tests\files\TestClass;
 use PHPUnit\Framework\TestCase;
 
-class GeneratorTest extends TestCase
+class PhpDocFactoryTest extends TestCase
 {
     public function testGetParser()
     {
-        $generator = new Generator;
-        $parser = $generator->getParser();
+        $factory = new PhpDocFactory;
+        $parser = $factory->getParser();
 
         $this->assertInstanceOf(Parser::class, $parser);
-        $this->assertEquals($parser, $generator->getParser());
+        $this->assertEquals($parser, $factory->getParser());
     }
 
     public function testGetIndex()
     {
-        $generator = new Generator;
-        $generator->getClassDocs(TestClass::class);
-        $index = $generator->getIndex();
+        $factory = new PhpDocFactory;
+        $factory->getClassDocs(TestClass::class);
+        $index = $factory->getIndex();
 
         $this->assertEquals(['Berlioz\PhpDoc\Tests\files\TestClass',
                              'Berlioz\PhpDoc\Tests\files\TestClass::method1',
@@ -43,9 +43,9 @@ class GeneratorTest extends TestCase
 
     public function testGetClassDocs()
     {
-        $generator = new Generator;
+        $factory = new PhpDocFactory;
         /** @var \Berlioz\PhpDoc\Doc[] $docs */
-        $docs = $generator->getClassDocs(TestClass::class);
+        $docs = $factory->getClassDocs(TestClass::class);
 
         $this->assertCount(3, $docs);
 
@@ -63,9 +63,9 @@ class GeneratorTest extends TestCase
 
     public function testGetClassDoc()
     {
-        $generator = new Generator;
+        $factory = new PhpDocFactory;
         /** @var \Berlioz\PhpDoc\Doc $doc */
-        $doc = $generator->getClassDoc(TestClass::class);
+        $doc = $factory->getClassDoc(TestClass::class);
 
         $this->assertInstanceOf(Doc::class, $doc);
         $this->assertEquals('Class TestClass.', $doc->getTitle());
@@ -73,9 +73,9 @@ class GeneratorTest extends TestCase
 
     public function testGetMethodDoc()
     {
-        $generator = new Generator;
+        $factory = new PhpDocFactory;
         /** @var \Berlioz\PhpDoc\Doc $docs */
-        $doc = $generator->getMethodDoc(TestClass::class, 'method1');
+        $doc = $factory->getMethodDoc(TestClass::class, 'method1');
 
         $this->assertInstanceOf(Doc::class, $doc);
         $this->assertEquals('My method.', $doc->getTitle());
@@ -85,9 +85,9 @@ class GeneratorTest extends TestCase
     {
         require_once __DIR__ . '/files/function.php';
 
-        $generator = new Generator;
+        $factory = new PhpDocFactory;
         /** @var \Berlioz\PhpDoc\Doc $docs */
-        $doc = $generator->getFunctionDoc('test');
+        $doc = $factory->getFunctionDoc('test');
 
         $this->assertInstanceOf(Doc::class, $doc);
         $this->assertEquals('Function test.', $doc->getTitle());

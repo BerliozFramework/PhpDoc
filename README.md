@@ -25,28 +25,28 @@ $ composer require berlioz/php-doc
 ### Basic
 
 ```php
-$generator = new Generator;
+$phpDocFactory = new PhpDocFactory;
 
 // To get class PhpDoc
-$doc = $generator->getClassDoc(ClassOfMyProject::class);
+$doc = $phpDocFactory->getClassDoc(ClassOfMyProject::class);
 
 // To get class method PhpDoc
-$doc = $generator->getMethodDoc(ClassOfMyProject::class, 'myMethod');
+$doc = $phpDocFactory->getMethodDoc(ClassOfMyProject::class, 'myMethod');
 
 // To get function PhpDoc
-$doc = $generator->getMethodDoc('myFunction');
+$doc = $phpDocFactory->getMethodDoc('myFunction');
 ```
 
 ### Cache
 
 The library supports PSR-16 (Common Interface for Caching Libraries).
 
-To use it, you need to pass the cache manager in first argument of `Generator` class.
+To use it, you need to pass the cache manager in first argument of `PhpDocFactory` class.
 
 ```php
 $simpleCacheManager = new MySimpleCacheManager;
 
-$generator = new Generator($simpleCacheManager);
+$phpDocFactory = new PhpDocFactory($simpleCacheManager);
 ```
 
 So you do disk i/o economies and your application will be faster than if you don't use cache manager.
@@ -55,10 +55,10 @@ So you do disk i/o economies and your application will be faster than if you don
 ## Berlioz\PhpDoc\Doc class
 
 A `Doc` class or an array of them are returned when you call these methods of generator:
-- `Generator::getClassDocs()` returns an array of `Berlioz\PhpDoc\Doc`
-- `Generator::getClassDoc()` returns a `Berlioz\PhpDoc\Doc` object
-- `Generator::getMethodDoc()` returns a `Berlioz\PhpDoc\Doc` object
-- `Generator::getFunctionDoc()` returns a `Berlioz\PhpDoc\Doc` object
+- `PhpDocFactory::getClassDocs()` returns an array of `Berlioz\PhpDoc\Doc`
+- `PhpDocFactory::getClassDoc()` returns a `Berlioz\PhpDoc\Doc` object
+- `PhpDocFactory::getMethodDoc()` returns a `Berlioz\PhpDoc\Doc` object
+- `PhpDocFactory::getFunctionDoc()` returns a `Berlioz\PhpDoc\Doc` object
 
 Some methods are available with `Doc` object:
 - `Doc::getTitle()` returns the title part in the PhpDoc
@@ -198,6 +198,6 @@ You can extends tags and declare them to the parser.
 Yours tags must implements TagInterface interface.
 
 ```php
-$generator = new Gernetor;
-$generator->getParser()->addTagClass('tagName', MyTagClass::class);
+$phpDocFactory = new Gernetor;
+$phpDocFactory->getParser()->addTagClass('tagName', MyTagClass::class);
 ```
