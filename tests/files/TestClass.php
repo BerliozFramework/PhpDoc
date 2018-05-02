@@ -21,6 +21,22 @@ namespace Berlioz\PhpDoc\Tests\files;
 class TestClass
 {
     /**
+     * Property 1.
+     *
+     * @var string
+     */
+    private $property1;
+    /** @var int Property 2 */
+    public $property2;
+
+    /**
+     * TestClass constructor.
+     */
+    public function __construct()
+    {
+    }
+
+    /**
      * My method.
      *
      * My description of method.
@@ -51,7 +67,7 @@ class TestClass
      * @throws \Exception if an error occurred.
      * @route("test", param1=true, param2="test", param3={"test":"test"})
      */
-    public function method2(string $param1, int $param2)
+    protected function method2(string $param1, int $param2)
     {
         return '';
     }

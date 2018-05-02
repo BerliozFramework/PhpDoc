@@ -12,45 +12,17 @@
 
 namespace Berlioz\PhpDoc;
 
-use Berlioz\PhpDoc\Exception\PhpDocException;
-use Psr\Log\LoggerInterface;
-use Psr\Log\LogLevel;
+use Berlioz\PhpDoc\Exception\ParserException;
+use Berlioz\PhpDoc\Tag\ParamTag;
+use Berlioz\PhpDoc\Tag\ReturnTag;
+use Berlioz\PhpDoc\Tag\VarTag;
 
 class Parser
 {
-    /** @var \Psr\Log\LoggerInterface|null Logger */
-    private $logger;
     /** @var string[] Tags classes */
-    private $tagsClasses;
-
-    /**
-     * Parser constructor.
-     *
-     * @param null|\Psr\Log\LoggerInterface $logger
-     */
-    public function __construct(?LoggerInterface $logger = null)
-    {
-        $this->logger = $logger;
-        $this->tagsClasses = [];
-    }
-
-    /**
-     * Logs with an arbitrary level.
-     *
-     * @param mixed  $level
-     * @param string $message
-     * @param array  $context
-     *
-     * @return void
-     */
-    private function log($level, string $message, array $context = [])
-    {
-        if (!is_null($this->logger)) {
-            $this->logger->log($level,
-                               sprintf('{class} / %s', $message),
-                               array_merge($context, ['class' => __CLASS__]));
-        }
-    }
+    protected $tagsClasses = ['var'    => VarTag::class,
+                              'param'  => ParamTag::class,
+                              'return' => ReturnTag::class];
 
     /**
      * Add tag class.
@@ -58,7 +30,7 @@ class Parser
      * @param string $name  Tag name
      * @param string $class Class name (must implements TagInterface interface)
      */
-    public function addTagClass(string $name, string $class)
+    public function addTag(string $name, string $class)
     {
         if (is_a($class, TagInterface::class, true)) {
             $this->tagsClasses[$name] = $class;
@@ -68,148 +40,22 @@ class Parser
     }
 
     /**
-     * Parse doc comment of function.
-     *
-     * @param string|\Closure $function
-     *
-     * @return \Berlioz\PhpDoc\Doc|null
-     * @throws \Berlioz\PhpDoc\Exception\PhpDocException
-     */
-    public function fromFunction($function): ?Doc
-    {
-        try {
-            $reflectionFunction = new \ReflectionFunction($function);
-            $doc = $this->fromReflectionFunction($reflectionFunction);
-
-            // Log
-            $this->log(LogLevel::DEBUG, sprintf('Parse doc comment of function "%s"', $reflectionFunction->getName()));
-        } catch (\ReflectionException $e) {
-            throw new \InvalidArgumentException('Argument of method must be a valid function name or a closure', 0, $e);
-        }
-
-        return $doc;
-    }
-
-    /**
-     * Parse doc comment of method.
-     *
-     * @param string $class  Class name
-     * @param string $method Method name
-     *
-     * @return \Berlioz\PhpDoc\Doc|null
-     * @throws \Berlioz\PhpDoc\Exception\PhpDocException
-     */
-    public function fromMethod(string $class, string $method): ?Doc
-    {
-        $class = ltrim($class, '\\');
-        $docs = $this->fromClass($class);
-
-        // Log
-        $this->log(LogLevel::DEBUG, sprintf('Parse doc comment of method "%s::%s"', $class, $method));
-
-        return $docs[sprintf('%s::%s', $class, $method)];
-    }
-
-    /**
-     * Parse doc comment of class and methods.
-     *
-     * @param string|object $class Class name or object
-     *
-     * @return array
-     * @throws \Berlioz\PhpDoc\Exception\PhpDocException
-     */
-    public function fromClass($class): array
-    {
-        $docs = [];
-
-        // Reflection of class
-        if (is_object($class)) {
-            $reflectionClass = new \ReflectionObject($class);
-        } else {
-            try {
-                $reflectionClass = new \ReflectionClass($class);
-            } catch (\ReflectionException $e) {
-                throw new \InvalidArgumentException('Argument of method must be a valid class name or an object', 0, $e);
-            }
-        }
-
-        // Class
-        $doc = null;
-        if ($classDoc = $reflectionClass->getDocComment()) {
-            if (!is_null($doc = $this->fromDocComment($classDoc))) {
-                $doc->setParentType(Doc::PARENT_TYPE_CLASS);
-                $doc->setParentName($reflectionClass->getName());
-            }
-        }
-        $docs[$class] = $doc;
-
-        // Log
-        $this->log(LogLevel::DEBUG, sprintf('Parse doc comment of class "%s"', $reflectionClass->getName()));
-
-        // Methods
-        foreach ($reflectionClass->getMethods() as $reflectionMethod) {
-            $doc = $this->fromReflectionFunction($reflectionMethod);
-            $docs[sprintf('%s::%s', $reflectionMethod->class, $reflectionMethod->name)] = $doc;
-
-            // Log
-            $this->log(LogLevel::DEBUG, sprintf('Parse doc comment of class "%s", parse method "%s"', $reflectionMethod->class, $reflectionMethod->name));
-        }
-
-        return $docs;
-    }
-
-    /**
-     * Generate Doc from function/method.
-     *
-     * @param \ReflectionFunctionAbstract $reflectionFunction
-     *
-     * @return \Berlioz\PhpDoc\Doc|null
-     * @throws \Berlioz\PhpDoc\Exception\PhpDocException
-     */
-    public function fromReflectionFunction(\ReflectionFunctionAbstract $reflectionFunction): ?Doc
-    {
-        if ($functionDoc = $reflectionFunction->getDocComment()) {
-            $doc = $this->fromDocComment($functionDoc);
-
-            if ($reflectionFunction instanceof \ReflectionMethod) {
-                $doc->setParentType(Doc::PARENT_TYPE_METHOD);
-                $doc->setParentName(sprintf('%s::%s', $reflectionFunction->class, $reflectionFunction->getName()));
-            } else {
-                $doc->setParentType(Doc::PARENT_TYPE_FUNCTION);
-                $doc->setParentName($reflectionFunction->getName());
-            }
-
-            return $doc;
-        }
-
-        return null;
-    }
-
-    /**
-     * Generate Doc from doc comment.
+     * Parse doc comment.
      *
      * @param string $doc
      *
-     * @return \Berlioz\PhpDoc\Doc
-     * @throws \Berlioz\PhpDoc\Exception\PhpDocException
+     * @return array
+     * @throws \Berlioz\PhpDoc\Exception\ParserException
      */
-    public function fromDocComment(string $doc): Doc
+    public function parse(string $doc): array
     {
         $docExploded = $this->explodeDoc($this->removeAsterisks($doc));
 
-        $doc = new Doc;
-        $doc->setTitle($docExploded['title']);
-        $doc->setDescription($docExploded['description'] ?: null);
-
-        $tags = [];
-        foreach ($docExploded['tags'] as $tag) {
+        foreach ($docExploded['tags'] as &$tag) {
             $tag = $this->parseTag($tag);
-            $tags[$tag->getName()][] = $tag;
         }
 
-        $doc->setTags($tags);
-
-        return $doc;
+        return $docExploded;
     }
 
     /**
@@ -221,7 +67,7 @@ class Parser
      */
     private function removeAsterisks(string $str): string
     {
-        $str = preg_replace('#^\s*\/+\*+\s*$|\h*\*+\/+\s*$|^\h*\*+\h?#m', '', $str);
+        $str = preg_replace('#^\s*\/+\*+\s*|\h*\*+\/+\s*$|\h*\*+\h?#m', '', $str);
         $str = trim($str);
 
         return $str;
@@ -285,7 +131,7 @@ class Parser
      * @param string $tag
      *
      * @return \Berlioz\PhpDoc\Tag
-     * @throws \Berlioz\PhpDoc\Exception\PhpDocException
+     * @throws \Berlioz\PhpDoc\Exception\ParserException
      */
     private function parseTag(string $tag): Tag
     {
@@ -346,13 +192,14 @@ EOD;
                 }
             }
 
-            if (array_key_exists($tagName, $this->tagsClasses)) {
-                return new $this->tagsClasses[$tagName]($tagName, $value, $tagValue);
-            } else {
-                return new Tag($tagName, $value, $tagValue);
-            }
+            // Create tag object
+            $tagClass = $this->tagsClasses[$tagName] ?? Tag::class;
+            /** @var \Berlioz\PhpDoc\Tag $tag */
+            $tag = new $tagClass($tagName, $value, $tagValue);
+
+            return $tag;
         } else {
-            throw new PhpDocException(sprintf('Bad tag format for "%s"', $tag));
+            throw new ParserException(sprintf('Bad tag format for "%s"', $tag));
         }
     }
 }

@@ -12,9 +12,14 @@
 
 namespace Berlioz\PhpDoc\Tests;
 
-use Berlioz\PhpDoc\Doc;
-use Berlioz\PhpDoc\PhpDocFactory;
+use Berlioz\PhpDoc\DocBlock\ClassDocBlock;
+use Berlioz\PhpDoc\DocBlock\FunctionDocBlock;
+use Berlioz\PhpDoc\DocBlock\MethodDocBlock;
+use Berlioz\PhpDoc\DocBlock\PropertyDocBlock;
 use Berlioz\PhpDoc\Parser;
+use Berlioz\PhpDoc\PhpDocFactory;
+use Berlioz\PhpDoc\Tag\ParamTag;
+use Berlioz\PhpDoc\Tag\ReturnTag;
 use Berlioz\PhpDoc\Tests\files\TestClass;
 use PHPUnit\Framework\TestCase;
 
@@ -36,60 +41,97 @@ class PhpDocFactoryTest extends TestCase
         $index = $factory->getIndex();
 
         $this->assertEquals(['Berlioz\PhpDoc\Tests\files\TestClass',
+                             'Berlioz\PhpDoc\Tests\files\TestClass::$property1',
+                             'Berlioz\PhpDoc\Tests\files\TestClass::$property2',
+                             'Berlioz\PhpDoc\Tests\files\TestClass::__construct',
                              'Berlioz\PhpDoc\Tests\files\TestClass::method1',
                              'Berlioz\PhpDoc\Tests\files\TestClass::method2'],
                             $index);
     }
 
-    public function testGetClassDocs()
+    public function testGetFunctionDoc()
     {
+        require_once __DIR__ . '/files/function.php';
+        require_once __DIR__ . '/files/function2.php';
+
         $factory = new PhpDocFactory;
-        /** @var \Berlioz\PhpDoc\Doc[] $docs */
-        $docs = $factory->getClassDocs(TestClass::class);
 
-        $this->assertCount(3, $docs);
+        $doc = $factory->getFunctionDoc('test');
+        $this->assertInstanceOf(FunctionDocBlock::class, $doc);
+        $this->assertEquals('Function test.', $doc->getTitle());
+        $this->assertEquals('\test', $doc->getName());
 
-        $this->assertArrayHasKey('Berlioz\PhpDoc\Tests\files\TestClass', $docs);
-        $this->assertArrayHasKey('Berlioz\PhpDoc\Tests\files\TestClass::method1', $docs);
-        $this->assertArrayHasKey('Berlioz\PhpDoc\Tests\files\TestClass::method2', $docs);
-
-        $this->assertInstanceOf(Doc::class, $docs['Berlioz\PhpDoc\Tests\files\TestClass']);
-        $this->assertInstanceOf(Doc::class, $docs['Berlioz\PhpDoc\Tests\files\TestClass::method1']);
-        $this->assertInstanceOf(Doc::class, $docs['Berlioz\PhpDoc\Tests\files\TestClass::method2']);
-
-        $this->assertEquals('Class TestClass.', $docs['Berlioz\PhpDoc\Tests\files\TestClass']->getTitle());
-        $this->assertEquals('My method.', $docs['Berlioz\PhpDoc\Tests\files\TestClass::method1']->getTitle());
-    }
-
-    public function testGetClassDoc()
-    {
-        $factory = new PhpDocFactory;
-        /** @var \Berlioz\PhpDoc\Doc $doc */
-        $doc = $factory->getClassDoc(TestClass::class);
-
-        $this->assertInstanceOf(Doc::class, $doc);
-        $this->assertEquals('Class TestClass.', $doc->getTitle());
+        $doc = $factory->getFunctionDoc('\Berlioz\PhpDoc\Tests\files\test');
+        $this->assertInstanceOf(FunctionDocBlock::class, $doc);
+        $this->assertEquals('Function test 2.', $doc->getTitle());
+        $this->assertEquals('Berlioz\PhpDoc\Tests\files\test', $doc->getName());
     }
 
     public function testGetMethodDoc()
     {
         $factory = new PhpDocFactory;
-        /** @var \Berlioz\PhpDoc\Doc $docs */
         $doc = $factory->getMethodDoc(TestClass::class, 'method1');
-
-        $this->assertInstanceOf(Doc::class, $doc);
+        $this->assertInstanceOf(MethodDocBlock::class, $doc);
         $this->assertEquals('My method.', $doc->getTitle());
+        $this->assertTrue($doc->isPublic());
+        $this->assertFalse($doc->isPrivate());
+        $this->assertFalse($doc->isAbstract());
+
+        /** @var \Berlioz\PhpDoc\Tag\ParamTag[] $tags */
+        $this->assertCount(3, $tags = $doc->getTag('param'));
+        $this->assertInstanceOf(ParamTag::class, $tags[0]);
+        $this->assertEquals('Parameter 1', $tags[0]->getVarTitle());
+        $this->assertEquals('string', $tags[0]->getVarType());
+        $this->assertEquals('$param1', $tags[0]->getVarName());
+
+        /** @var \Berlioz\PhpDoc\Tag\ReturnTag[] $tags */
+        $this->assertCount(1, $tags = $doc->getTag('return'));
+        $this->assertInstanceOf(ReturnTag::class, $tags[0]);
+        $this->assertNull($tags[0]->getVarTitle());
+        $this->assertEquals('int', $tags[0]->getVarType());
     }
 
-    public function testGetFunctionDoc()
+    public function testGetClassDoc()
     {
-        require_once __DIR__ . '/files/function.php';
-
         $factory = new PhpDocFactory;
-        /** @var \Berlioz\PhpDoc\Doc $docs */
-        $doc = $factory->getFunctionDoc('test');
+        $doc = $factory->getClassDoc(TestClass::class);
+        $this->assertInstanceOf(ClassDocBlock::class, $doc);
+        $this->assertEquals('Class TestClass.', $doc->getTitle());
+    }
 
-        $this->assertInstanceOf(Doc::class, $doc);
-        $this->assertEquals('Function test.', $doc->getTitle());
+    public function testGetFromReflection()
+    {
+        $factory = new PhpDocFactory;
+        $doc = $factory->getFromReflection(new \ReflectionMethod(TestClass::class, 'method1'));
+        $this->assertEquals('My method.', $doc->getTitle());
+        $this->assertEquals("My description of method.\nAgain.", $doc->getDescription());
+        $this->assertCount(2, $doc->getTags());
+        $this->assertCount(3, $doc->getTag('param'));
+        $this->assertEquals('string            $param1 Parameter 1', $doc->getTag('param')[0]->getValue());
+        $this->assertEquals('int               $param2 Parameter 2', $doc->getTag('param')[1]->getValue());
+        $this->assertEquals('\SimpleXMLElement $param3 Parameter 3', $doc->getTag('param')[2]->getValue());
+    }
+
+    public function testGetPropertyDoc()
+    {
+        $factory = new PhpDocFactory;
+        $doc = $factory->getPropertyDoc(TestClass::class, 'property1');
+        $this->assertInstanceOf(PropertyDocBlock::class, $doc);
+        $this->assertEquals('Property 1.', $doc->getTitle());
+    }
+
+    public function testGetClassDocs()
+    {
+        $factory = new PhpDocFactory;
+        /** @var \Berlioz\PhpDoc\DocBlock[] $docs */
+        $docs = $factory->getClassDocs(TestClass::class);
+
+        $this->assertCount(6, $docs);
+        $this->assertArrayHasKey('Berlioz\PhpDoc\Tests\files\TestClass', $docs);
+        $this->assertArrayHasKey('Berlioz\PhpDoc\Tests\files\TestClass::__construct', $docs);
+        $this->assertArrayHasKey('Berlioz\PhpDoc\Tests\files\TestClass::$property1', $docs);
+        $this->assertArrayHasKey('Berlioz\PhpDoc\Tests\files\TestClass::$property2', $docs);
+        $this->assertArrayHasKey('Berlioz\PhpDoc\Tests\files\TestClass::method1', $docs);
+        $this->assertArrayHasKey('Berlioz\PhpDoc\Tests\files\TestClass::method2', $docs);
     }
 }

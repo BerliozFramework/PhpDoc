@@ -1,5 +1,4 @@
 <?php
-
 /**
  * This file is part of Berlioz framework.
  *
@@ -11,17 +10,8 @@
  * file that was distributed with this source code, to the root.
  */
 
-namespace Berlioz\PhpDoc\Tests\files;
+namespace Berlioz\PhpDoc\Exception;
 
-/**
- * Function test 2.
- *
- * @param string $param1
- * @param int    $param2
- *
- * @return string
- */
-function test(string $param1, int $param2): string
+class ParserException extends PhpDocException
 {
-    return '';
 }

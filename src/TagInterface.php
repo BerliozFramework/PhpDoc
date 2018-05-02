@@ -44,5 +44,5 @@ interface TagInterface
      *
      * @return string
      */
-    public function getOriginalValue(): string;
+    public function getRaw(): string;
 }

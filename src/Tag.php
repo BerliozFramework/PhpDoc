@@ -18,21 +18,21 @@ class Tag implements TagInterface
     protected $name;
     /** @var mixed Value */
     protected $value;
-    /** @var string Original value */
-    protected $originalValue;
+    /** @var string Raw value */
+    protected $raw;
 
     /**
      * Tag constructor.
      *
-     * @param string      $name          Name of tag
-     * @param null|mixed  $value         Value of tag (parsed)
-     * @param null|string $originalValue Original value (if null, equal to the value parameter)
+     * @param string      $name  Name of tag
+     * @param null|mixed  $value Value of tag (parsed)
+     * @param null|string $raw   Raw value (if null, equal to the value parameter)
      */
-    public function __construct(string $name, $value = null, ?string $originalValue = null)
+    public function __construct(string $name, $value = null, ?string $raw = null)
     {
         $this->name = $name;
         $this->value = $value;
-        $this->originalValue = $originalValue;
+        $this->raw = $raw;
     }
 
     /**
@@ -56,12 +56,12 @@ class Tag implements TagInterface
     }
 
     /**
-     * Get original value.
+     * Get raw value.
      *
      * @return string
      */
-    public function getOriginalValue(): string
+    public function getRaw(): string
     {
-        return $this->originalValue;
+        return $this->raw;
     }
 }
