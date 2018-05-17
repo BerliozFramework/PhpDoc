@@ -88,4 +88,22 @@ EOD;
         $this->assertInstanceOf(SpecialTag::class, $doc['tags'][2]);
         $this->assertInstanceOf(SpecialTag::class, $doc['tags'][4]);
     }
+
+    public function testArrayTags()
+    {
+        $str = <<<'EOD'
+    /**
+     * @test1("value")
+     * @test2 "value"
+     */
+EOD;
+
+        $parser = new Parser;
+        $doc = $parser->parse($str);
+        /** @var \Berlioz\PhpDoc\Tag[] $tags */
+        $tags = $doc['tags'];
+
+        $this->assertEquals(["value"], $tags[0]->getValue());
+        $this->assertEquals("value", $tags[1]->getValue());
+    }
 }

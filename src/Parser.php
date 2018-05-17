@@ -158,7 +158,9 @@ EOD;
         $matches = [];
         if (preg_match('~' . $regex_define . '[\n\s]* @(?<name> \g<d_tag_type> ) [\n\s]* (?> \( (?<value1> .* ) \) | (?<value2> .* ) | \V+ )? $~xim', $tag, $matches) == 1) {
             $tagName = $matches['name'];
+
             $tagValue = $value = $matches['value1'] ?: $matches['value2'] ?: null;
+            $tagValueIsArray = !empty($matches['value1']);
 
             if ($value !== null) {
                 $value = trim($value);
@@ -185,7 +187,7 @@ EOD;
                             $value[$match['name'] ?: $key] = $opt_value;
                         }
 
-                        if (count($value) == 1) {
+                        if (!$tagValueIsArray && count($value) == 1) {
                             $value = reset($value);
                         }
                     }
