@@ -67,7 +67,7 @@ class Parser
      */
     private function removeAsterisks(string $str): string
     {
-        $str = preg_replace('#^\s*\/+\*+\s*|\h*\*+\/+\s*$|\h*\*+\h?#m', '', $str);
+        $str = preg_replace('#^\s*\/+\*+\v*|\h*\*+\/+\s*$|^\h*\*+\h?#m', '', $str);
         $str = trim($str);
 
         return $str;

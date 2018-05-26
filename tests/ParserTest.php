@@ -29,7 +29,7 @@ class ParserTest extends TestCase
      * @test  false
      * @novalue
      * @value Only text
-     * @test2("test", param1=true, param2="test", param3={"test":"test"})
+     * @test2("test", param1=true, param2="test", param3={"test":".*"})
      * @value Second text
      * @jsonTest {"test":"test"}
      * @jsonArrayTest [{"test":"test"}, {"test2":"test2"}]
@@ -55,9 +55,13 @@ EOD;
         $this->assertEquals("My description of my method.\nMulti-line.", $doc['description']);
         $this->assertCount(7, $doc['tags']);
 
-        foreach ($doc['tags'] as $tag) {
+        foreach ($doc['tags'] as $key=>$tag) {
             $this->assertInstanceOf(Tag::class, $tag);
         }
+
+        /** @var \Berlioz\PhpDoc\Tag $tag */
+        $tag = $doc['tags'][3];
+        $this->assertEquals('.*', $tag->getValue()['param3']->test);
     }
 
     public function testParse2()
