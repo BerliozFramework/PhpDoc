@@ -65,7 +65,8 @@ class TestClass
      * @return string
      *
      * @throws \Exception if an error occurred.
-     * @route("test", param1=true, param2="test", param3={"test":"test"})
+     * @route("test", param1=true, param2="test", param3={"test":
+     *      "test"})
      */
     protected function method2(string $param1, int $param2)
     {

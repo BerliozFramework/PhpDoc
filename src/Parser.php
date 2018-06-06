@@ -103,7 +103,7 @@ class Parser
                     } // Complete tag
                     else {
                         end($result['tags']);
-                        $result['tags'][key($result['tags'])] = $line;
+                        $result['tags'][key($result['tags'])] .= $line;
                     }
                 }
             } else {
