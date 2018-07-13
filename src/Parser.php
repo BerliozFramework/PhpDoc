@@ -139,7 +139,7 @@ class Parser
 (?(DEFINE)
     (?<d_bool> true | false )
     (?<d_null> null )
-    (?<d_numeric> \d+(?: \.\d+)? )
+    (?<d_numeric> \-? \d+(?: \.\d+)? )
     (?<d_quotes> \'(?>[^'\\]++|\\.)*\' | "(?>[^"\\]++|\\.)*" )
     (?<d_value> \g<d_quotes> | \g<d_numeric> | \g<d_bool> | \g<d_null> | \g<d_json_array> | \g<d_json_obj> )
 
