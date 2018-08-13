@@ -29,7 +29,8 @@ class ParserTest extends TestCase
      * @test  false
      * @novalue
      * @value Only text
-     * @test2("test", param1=true, param2="test", param3={"test":".*"})
+     * @test2("test", param1=true, param2="test", param3={"test":".*"}, param4={"test":"Test\nTest"})
+     * @route("/users/{id}", name="user-edit", requirements={"id": "\\d+"})
      * @value Second text
      * @jsonTest {"test":"test"}
      * @jsonArrayTest [{"test":"test"}, {"test2":"test2"}]
@@ -53,15 +54,20 @@ EOD;
 
         $this->assertEquals('Test doc.', $doc['title']);
         $this->assertEquals("My description of my method.\nMulti-line.", $doc['description']);
-        $this->assertCount(7, $doc['tags']);
+        $this->assertCount(8, $doc['tags']);
 
-        foreach ($doc['tags'] as $key=>$tag) {
+        foreach ($doc['tags'] as $key => $tag) {
             $this->assertInstanceOf(Tag::class, $tag);
         }
 
         /** @var \Berlioz\PhpDoc\Tag $tag */
         $tag = $doc['tags'][3];
         $this->assertEquals('.*', $tag->getValue()['param3']->test);
+
+        /** @var \Berlioz\PhpDoc\Tag $tag */
+        $tag = $doc['tags'][4];
+        $this->assertNotEmpty($tag->getValue()['requirements']);
+        $this->assertEquals('\d+', $tag->getValue()['requirements']->id);
     }
 
     public function testParse2()
@@ -90,7 +96,7 @@ EOD;
 
         $this->assertNotInstanceOf(SpecialTag::class, $doc['tags'][1]);
         $this->assertInstanceOf(SpecialTag::class, $doc['tags'][2]);
-        $this->assertInstanceOf(SpecialTag::class, $doc['tags'][4]);
+        $this->assertInstanceOf(SpecialTag::class, $doc['tags'][5]);
     }
 
     public function testArrayTags()
