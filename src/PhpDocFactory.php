@@ -236,7 +236,7 @@ class PhpDocFactory
 
 
     ///////////////////////////////////////////////////////////////////////////
-    ///                GETTERS TO CONSTRUCT DOC BLOCKS CLASSES                ///
+    ///                GETTERS TO CONSTRUCT DOC BLOCKS CLASSES              ///
     ///////////////////////////////////////////////////////////////////////////
 
     /**
@@ -251,7 +251,7 @@ class PhpDocFactory
     public function getFunctionDoc(string $function): FunctionDocBlock
     {
         // Get from cache
-        if (($doc = $this->getDocFromCache($function)) === false || !($doc instanceof FunctionDocBlock)) {
+        if (is_null($doc = $this->getDocFromCache($function)) || !($doc instanceof FunctionDocBlock)) {
             try {
                 $reflection = new \ReflectionFunction($function);
             } catch (\Exception $e) {
@@ -275,7 +275,7 @@ class PhpDocFactory
     public function getClassDoc(string $class): ClassDocBlock
     {
         // Get from cache
-        if (($doc = $this->getDocFromCache($class)) === false || !($doc instanceof ClassDocBlock)) {
+        if (is_null($doc = $this->getDocFromCache($class)) || !($doc instanceof ClassDocBlock)) {
             try {
                 $reflection = new \ReflectionClass($class);
             } catch (\Exception $e) {
@@ -312,7 +312,7 @@ class PhpDocFactory
         $fullName = sprintf('%s::$%s', $class, $property);
 
         // Get from cache
-        if (($doc = $this->getDocFromCache($fullName)) === false || !($doc instanceof PropertyDocBlock)) {
+        if (is_null($doc = $this->getDocFromCache($fullName)) || !($doc instanceof PropertyDocBlock)) {
             try {
                 $reflection = new \ReflectionProperty($class, $property);
             } catch (\Exception $e) {
@@ -339,7 +339,7 @@ class PhpDocFactory
         $fullName = sprintf('%s::%s', $class, $method);
 
         // Get from cache
-        if (($doc = $this->getDocFromCache($fullName)) === false || !($doc instanceof MethodDocBlock)) {
+        if (is_null($doc = $this->getDocFromCache($fullName)) || !($doc instanceof MethodDocBlock)) {
             try {
                 $reflection = new \ReflectionMethod($class, $method);
             } catch (\Exception $e) {
@@ -415,12 +415,12 @@ class PhpDocFactory
         }
 
         // Get from cache
-        if (($doc = $this->getDocFromCache($name)) === false || !($doc instanceof DocBlock)) {
+        if (is_null($doc = $this->getDocFromCache($name)) || !($doc instanceof DocBlock)) {
             // Get doc comment
             $docComment = $reflection->getDocComment();
 
             // Parse doc comment
-            $docCommentParsed = $this->getParser()->parse($docComment);
+            $docCommentParsed = $this->getParser()->parse($docComment ?: '');
 
             // Group tags
             $tags = [];
