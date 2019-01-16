@@ -178,7 +178,7 @@ EOD;
                                 $opt_value = substr($match['value_quoted'], 1, -1);
                             } elseif (!empty($match['value_bool'])) {
                                 $opt_value = $match['value_bool'] == 'true';
-                            } elseif (!empty($match['value_numeric'])) {
+                            } elseif (mb_strlen($match['value_numeric']) > 0) {
                                 $opt_value = floatval($match['value_numeric']);
                             } elseif (!empty($match['value_null'])) {
                                 $opt_value = null;

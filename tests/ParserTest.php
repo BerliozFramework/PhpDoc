@@ -30,7 +30,7 @@ class ParserTest extends TestCase
      * @novalue
      * @value Only text
      * @test2("test", param1=true, param2="test", param3={"test":".*"}, param4={"test":"Test\nTest"})
-     * @route("/users/{id}", name="user-edit", requirements={"id": "\\d+"})
+     * @route("/users/{id}", name="user-edit", requirements={"id": "\\d+"}, priority=0)
      * @value Second text
      * @jsonTest {"test":"test"}
      * @jsonArrayTest [{"test":"test"}, {"test2":"test2"}]
@@ -68,6 +68,11 @@ EOD;
         $tag = $doc['tags'][4];
         $this->assertNotEmpty($tag->getValue()['requirements']);
         $this->assertEquals('\d+', $tag->getValue()['requirements']->id);
+
+        /** @var \Berlioz\PhpDoc\Tag $tag */
+        $tag = $doc['tags'][4];
+        $this->assertArrayHasKey('priority', $tag->getValue());
+        $this->assertEquals('0', $tag->getValue()['priority']);
     }
 
     public function testParse2()
