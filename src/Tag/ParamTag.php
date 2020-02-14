@@ -14,6 +14,11 @@ declare(strict_types=1);
 
 namespace Berlioz\PhpDoc\Tag;
 
+/**
+ * Class ParamTag.
+ *
+ * @package Berlioz\PhpDoc\Tag
+ */
 class ParamTag extends VarTag
 {
     /** @var string|null Variable name */
@@ -25,11 +30,17 @@ class ParamTag extends VarTag
     protected function parseValue()
     {
         $matches = [];
-        if (preg_match('/^\s*(?<type>[\w\|\\\[\]]+\b)?(?:\s*(?<name>\$[\w_]+))?(?:\s+(?<title>.+))?\s*$/i', $this->raw, $matches) === 1) {
-            $this->varType = $matches['type'] ?? null;
-            $this->varName = $matches['name'] ?? null;
-            $this->varTitle = $matches['title'] ?? null;
+        if (preg_match(
+                '/^\s*(?<type>[\w\|\\\[\]]+\b)?(?:\s*(?<name>\$[\w_]+))?(?:\s+(?<title>.+))?\s*$/i',
+                $this->raw,
+                $matches
+            ) !== 1) {
+            return;
         }
+
+        $this->varType = $matches['type'] ?? null;
+        $this->varName = $matches['name'] ?? null;
+        $this->varTitle = $matches['title'] ?? null;
     }
 
     /**

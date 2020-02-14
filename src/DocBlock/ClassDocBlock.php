@@ -15,21 +15,27 @@ declare(strict_types=1);
 namespace Berlioz\PhpDoc\DocBlock;
 
 use Berlioz\PhpDoc\DocBlock;
+use ReflectionClass;
 
+/**
+ * Class ClassDocBlock.
+ *
+ * @package Berlioz\PhpDoc\DocBlock
+ */
 class ClassDocBlock extends DocBlock
 {
     // Constants
-    const IS_ABSTRACT = 1;
-    const IS_FINAL = 2;
-    const IS_INTERNAL = 4;
-    const IS_USER_DEFINED = 8;
-    const IS_ANONYMOUS = 16;
-    const IS_CLONEABLE = 32;
-    const IS_INSTANTIABLE = 64;
-    const IS_INTERFACE = 128;
-    const IS_ITERATEABLE = 256;
-    const IS_TRAIT = 512;
-    const IS_ITERABLE = 1024;
+    protected const IS_ABSTRACT = 1;
+    protected const IS_FINAL = 2;
+    protected const IS_INTERNAL = 4;
+    protected const IS_USER_DEFINED = 8;
+    protected const IS_ANONYMOUS = 16;
+    protected const IS_CLONEABLE = 32;
+    protected const IS_INSTANTIABLE = 64;
+    protected const IS_INTERFACE = 128;
+    protected const IS_ITERATEABLE = 256;
+    protected const IS_TRAIT = 512;
+    protected const IS_ITERABLE = 1024;
     /** @var int Properties */
     private $properties = 0;
     /** @var string Name of class */
@@ -42,13 +48,17 @@ class ClassDocBlock extends DocBlock
     /**
      * ClassDocBlock constructor.
      *
-     * @param \ReflectionClass $reflectionClass
-     * @param null|string      $title
-     * @param null|string      $description
-     * @param array            $tags
+     * @param ReflectionClass $reflectionClass
+     * @param null|string $title
+     * @param null|string $description
+     * @param array $tags
      */
-    public function __construct(\ReflectionClass $reflectionClass, ?string $title, ?string $description, array $tags = [])
-    {
+    public function __construct(
+        ReflectionClass $reflectionClass,
+        ?string $title,
+        ?string $description,
+        array $tags = []
+    ) {
         parent::__construct($title, $description, $tags);
 
         $this->name = $reflectionClass->getName();

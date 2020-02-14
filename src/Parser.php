@@ -18,27 +18,37 @@ use Berlioz\PhpDoc\Exception\ParserException;
 use Berlioz\PhpDoc\Tag\ParamTag;
 use Berlioz\PhpDoc\Tag\ReturnTag;
 use Berlioz\PhpDoc\Tag\VarTag;
+use InvalidArgumentException;
 
+/**
+ * Class Parser.
+ *
+ * @package Berlioz\PhpDoc
+ */
 class Parser
 {
     /** @var string[] Tags classes */
-    protected $tagsClasses = ['var'    => VarTag::class,
-                              'param'  => ParamTag::class,
-                              'return' => ReturnTag::class];
+    protected $tagsClasses = [
+        'var' => VarTag::class,
+        'param' => ParamTag::class,
+        'return' => ReturnTag::class
+    ];
 
     /**
      * Add tag class.
      *
-     * @param string $name  Tag name
+     * @param string $name Tag name
      * @param string $class Class name (must implements TagInterface interface)
      */
     public function addTag(string $name, string $class)
     {
-        if (is_a($class, TagInterface::class, true)) {
-            $this->tagsClasses[$name] = $class;
-        } else {
-            throw new \InvalidArgumentException(sprintf('Class name must implements %s interface', TagInterface::class));
+        if (!is_a($class, TagInterface::class, true)) {
+            throw new InvalidArgumentException(
+                sprintf('Class name must implements %s interface', TagInterface::class)
+            );
         }
+
+        $this->tagsClasses[$name] = $class;
     }
 
     /**
@@ -84,9 +94,11 @@ class Parser
      */
     private function explodeDoc(string $str): array
     {
-        $result = ['title'       => [],
-                   'description' => [],
-                   'tags'        => []];
+        $result = [
+            'title' => [],
+            'description' => [],
+            'tags' => []
+        ];
         $lines = preg_split('/\r\n|\r|\n/', $str);
 
         $step = 1;
@@ -98,27 +110,33 @@ class Parser
             if ($isTag || $step == 3) {
                 $step = 3;
 
-                if (!$emptyLine) {
-                    // New tag
-                    if ($isTag) {
-                        $result['tags'][] = $line;
-                    } // Complete tag
-                    else {
-                        end($result['tags']);
-                        $result['tags'][key($result['tags'])] .= $line;
-                    }
+                if ($emptyLine) {
+                    continue;
                 }
-            } else {
-                if ($emptyLine && $step == 1 && !empty($result['title'])) {
-                    $step = 2;
-                } else {
-                    if ($step == 1) {
-                        $result['title'][] = $line;
-                    } else {
-                        $result['description'][] = $line;
-                    }
+
+                // New tag
+                if ($isTag) {
+                    $result['tags'][] = $line;
+                    continue;
                 }
+
+                // Complete tag
+                end($result['tags']);
+                $result['tags'][key($result['tags'])] .= $line;
+                continue;
             }
+
+            if ($emptyLine && $step == 1 && !empty($result['title'])) {
+                $step = 2;
+                continue;
+            }
+
+            if ($step == 1) {
+                $result['title'][] = $line;
+                continue;
+            }
+
+            $result['description'][] = $line;
         }
 
         $result['title'] = trim(implode("\n", $result['title']) ?? null);
@@ -158,52 +176,60 @@ class Parser
 EOD;
 
         $matches = [];
-        if (preg_match('~' . $regex_define . '[\n\s]* @(?<name> \g<d_tag_type> ) [\n\s]* (?> \( (?<value1> .* ) \) | (?<value2> .* ) | \V+ )? $~xim', $tag, $matches) == 1) {
-            $tagName = $matches['name'];
+        if (preg_match(
+                '~' . $regex_define . '[\n\s]* @(?<name> \g<d_tag_type> ) [\n\s]* (?> \( (?<value1> .* ) \) | (?<value2> .* ) | \V+ )? $~xim',
+                $tag,
+                $matches
+            ) !== 1) {
+            throw new ParserException(sprintf('Bad tag format for "%s"', $tag));
+        }
 
-            $tagValue = $value = $matches['value1'] ?: $matches['value2'] ?: null;
-            $tagValueIsArray = !empty($matches['value1']);
+        $tagName = $matches['name'];
+        $tagValue = $value = $matches['value1'] ?: $matches['value2'] ?: null;
+        $tagValueIsArray = !empty($matches['value1']);
 
-            if ($value !== null) {
-                $value = trim($value);
+        if ($value !== null) {
+            $value = trim($value);
 
-                if (preg_match('~' . $regex_define . '^ \g<d_tag_options> $ ~xim', $value) == 1) {
-                    $matches = [];
-                    if (preg_match_all('~' . $regex_define . ' (?:, \s* | ^) (?: (?<name> [\w_]+ )\s*=\s* )? (?> (?<value_quoted> \g<d_quotes> ) | (?<value_bool> \g<d_bool> ) | (?<value_numeric> \g<d_numeric> ) | (?<value_null> \g<d_null> ) | (?<value_json> \g<d_json_array> | \g<d_json_obj> ) ) \s* (?: $)? ~xim', $value, $matches, PREG_SET_ORDER) > 0) {
-                        $value = [];
+            if (preg_match('~' . $regex_define . '^ \g<d_tag_options> $ ~xim', $value) == 1) {
+                $matches = [];
+                if (preg_match_all(
+                        '~' . $regex_define . ' (?:, \s* | ^) (?: (?<name> [\w_]+ )\s*=\s* )? (?> (?<value_quoted> \g<d_quotes> ) | (?<value_bool> \g<d_bool> ) | (?<value_numeric> \g<d_numeric> ) | (?<value_null> \g<d_null> ) | (?<value_json> \g<d_json_array> | \g<d_json_obj> ) ) \s* (?: $)? ~xim',
+                        $value,
+                        $matches,
+                        PREG_SET_ORDER
+                    ) > 0) {
+                    $value = [];
 
-                        foreach ($matches as $key => $match) {
+                    foreach ($matches as $key => $match) {
+                        $opt_value = null;
+                        if (!empty($match['value_quoted'])) {
+                            $opt_value = substr($match['value_quoted'], 1, -1);
+                        } elseif (!empty($match['value_bool'])) {
+                            $opt_value = $match['value_bool'] == 'true';
+                        } elseif (mb_strlen($match['value_numeric']) > 0) {
+                            $opt_value = floatval($match['value_numeric']);
+                        } elseif (!empty($match['value_null'])) {
                             $opt_value = null;
-                            if (!empty($match['value_quoted'])) {
-                                $opt_value = substr($match['value_quoted'], 1, -1);
-                            } elseif (!empty($match['value_bool'])) {
-                                $opt_value = $match['value_bool'] == 'true';
-                            } elseif (mb_strlen($match['value_numeric']) > 0) {
-                                $opt_value = floatval($match['value_numeric']);
-                            } elseif (!empty($match['value_null'])) {
-                                $opt_value = null;
-                            } elseif (!empty($match['value_json'])) {
-                                $opt_value = json_decode($match['value_json']);
-                            }
-
-                            $value[$match['name'] ?: $key] = $opt_value;
+                        } elseif (!empty($match['value_json'])) {
+                            $opt_value = json_decode($match['value_json']);
                         }
 
-                        if (!$tagValueIsArray && count($value) == 1) {
-                            $value = reset($value);
-                        }
+                        $value[$match['name'] ?: $key] = $opt_value;
+                    }
+
+                    if (!$tagValueIsArray && count($value) == 1) {
+                        $value = reset($value);
                     }
                 }
             }
-
-            // Create tag object
-            $tagClass = $this->tagsClasses[$tagName] ?? Tag::class;
-            /** @var \Berlioz\PhpDoc\Tag $tag */
-            $tag = new $tagClass($tagName, $value, $tagValue);
-
-            return $tag;
-        } else {
-            throw new ParserException(sprintf('Bad tag format for "%s"', $tag));
         }
+
+        // Create tag object
+        $tagClass = $this->tagsClasses[$tagName] ?? Tag::class;
+        /** @var \Berlioz\PhpDoc\Tag $tag */
+        $tag = new $tagClass($tagName, $value, $tagValue);
+
+        return $tag;
     }
 }

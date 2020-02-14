@@ -15,15 +15,21 @@ declare(strict_types=1);
 namespace Berlioz\PhpDoc\DocBlock;
 
 use Berlioz\PhpDoc\DocBlock;
+use ReflectionProperty;
 
+/**
+ * Class PropertyDocBlock.
+ *
+ * @package Berlioz\PhpDoc\DocBlock
+ */
 class PropertyDocBlock extends DocBlock
 {
     // Constants
-    const IS_PUBLIC = 1;
-    const IS_PROTECTED = 2;
-    const IS_PRIVATE = 4;
-    const IS_STATIC = 8;
-    const IS_DEFAULT = 16;
+    protected const IS_PUBLIC = 1;
+    protected const IS_PROTECTED = 2;
+    protected const IS_PRIVATE = 4;
+    protected const IS_STATIC = 8;
+    protected const IS_DEFAULT = 16;
     /** @var int Properties */
     private $properties = 0;
     /** @var string Name of property */
@@ -39,12 +45,16 @@ class PropertyDocBlock extends DocBlock
      * PropertyDocBlock constructor.
      *
      * @param \ReflectionProperty $reflectionProperty
-     * @param null|string         $title
-     * @param null|string         $description
-     * @param array               $tags
+     * @param null|string $title
+     * @param null|string $description
+     * @param array $tags
      */
-    public function __construct(\ReflectionProperty $reflectionProperty, ?string $title, ?string $description, array $tags = [])
-    {
+    public function __construct(
+        ReflectionProperty $reflectionProperty,
+        ?string $title,
+        ?string $description,
+        array $tags = []
+    ) {
         parent::__construct($title, $description, $tags);
 
         $this->name = sprintf('%s::$%s', $reflectionProperty->class, $reflectionProperty->getName());

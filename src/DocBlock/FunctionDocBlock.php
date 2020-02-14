@@ -14,10 +14,17 @@ declare(strict_types=1);
 
 namespace Berlioz\PhpDoc\DocBlock;
 
+use ReflectionFunction;
+
+/**
+ * Class FunctionDocBlock.
+ *
+ * @package Berlioz\PhpDoc\DocBlock
+ */
 class FunctionDocBlock extends AbstractFunctionDocBlock
 {
     // Constants
-    const IS_DISABLED = 1;
+    protected const IS_DISABLED = 1;
     /** @var int Properties */
     private $properties = 0;
 
@@ -25,12 +32,16 @@ class FunctionDocBlock extends AbstractFunctionDocBlock
      * FunctionDocBlock constructor.
      *
      * @param \ReflectionFunction $reflectionFunction
-     * @param null|string         $title
-     * @param null|string         $description
-     * @param array               $tags
+     * @param null|string $title
+     * @param null|string $description
+     * @param array $tags
      */
-    public function __construct(\ReflectionFunction $reflectionFunction, ?string $title, ?string $description, array $tags = [])
-    {
+    public function __construct(
+        ReflectionFunction $reflectionFunction,
+        ?string $title,
+        ?string $description,
+        array $tags = []
+    ) {
         parent::__construct($reflectionFunction, $title, $description, $tags);
 
         $this->properties = ($reflectionFunction->isDisabled() ? FunctionDocBlock::IS_DISABLED : 0);

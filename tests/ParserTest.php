@@ -77,7 +77,7 @@ EOD;
 
     public function testParse2()
     {
-        $parser = new Parser;
+        $parser = new Parser();
         $doc = $parser->parse(self::DOC2);
 
         $this->assertArrayHasKey('title', $doc);

@@ -14,17 +14,24 @@ declare(strict_types=1);
 
 namespace Berlioz\PhpDoc\DocBlock;
 
+use ReflectionMethod;
+
+/**
+ * Class MethodDocBlock.
+ *
+ * @package Berlioz\PhpDoc\DocBlock
+ */
 class MethodDocBlock extends AbstractFunctionDocBlock
 {
     // Constants
-    const IS_PUBLIC = 1;
-    const IS_PROTECTED = 2;
-    const IS_PRIVATE = 4;
-    const IS_CONSTRUCTOR = 8;
-    const IS_DESTRUCTOR = 16;
-    const IS_STATIC = 32;
-    const IS_ABSTRACT = 64;
-    const IS_FINAL = 128;
+    protected const IS_PUBLIC = 1;
+    protected const IS_PROTECTED = 2;
+    protected const IS_PRIVATE = 4;
+    protected const IS_CONSTRUCTOR = 8;
+    protected const IS_DESTRUCTOR = 16;
+    protected const IS_STATIC = 32;
+    protected const IS_ABSTRACT = 64;
+    protected const IS_FINAL = 128;
     /** @var int Properties */
     private $properties = 0;
     /** @var string Class name of method */
@@ -34,12 +41,16 @@ class MethodDocBlock extends AbstractFunctionDocBlock
      * MethodDocBlock constructor.
      *
      * @param \ReflectionMethod $reflectionMethod
-     * @param null|string       $title
-     * @param null|string       $description
-     * @param array             $tags
+     * @param null|string $title
+     * @param null|string $description
+     * @param array $tags
      */
-    public function __construct(\ReflectionMethod $reflectionMethod, ?string $title, ?string $description, array $tags = [])
-    {
+    public function __construct(
+        ReflectionMethod $reflectionMethod,
+        ?string $title,
+        ?string $description,
+        array $tags = []
+    ) {
         parent::__construct($reflectionMethod, $title, $description, $tags);
 
         $this->className = $reflectionMethod->class;

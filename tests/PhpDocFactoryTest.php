@@ -60,11 +60,27 @@ class PhpDocFactoryTest extends TestCase
         $this->assertInstanceOf(FunctionDocBlock::class, $doc);
         $this->assertEquals('Function test.', $doc->getTitle());
         $this->assertEquals('\test', $doc->getName());
+        $this->assertFalse($doc->isDisabled());
+        $this->assertFalse($doc->isClosure());
+        $this->assertFalse($doc->isDeprecated());
+        $this->assertFalse($doc->isGenerator());
+        $this->assertFalse($doc->isInternal());
+        $this->assertTrue($doc->isUserDefined());
+        $this->assertFalse($doc->isVariatic());
 
         $doc = $factory->getFunctionDoc('\Berlioz\PhpDoc\Tests\files\test');
         $this->assertInstanceOf(FunctionDocBlock::class, $doc);
         $this->assertEquals('Function test 2.', $doc->getTitle());
         $this->assertEquals('Berlioz\PhpDoc\Tests\files\test', $doc->getName());
+        $this->assertEquals('Berlioz\PhpDoc\Tests\files', $doc->getNamespaceName());
+        $this->assertEquals('test', $doc->getShortName());
+        $this->assertFalse($doc->isDisabled());
+        $this->assertFalse($doc->isClosure());
+        $this->assertFalse($doc->isDeprecated());
+        $this->assertFalse($doc->isGenerator());
+        $this->assertFalse($doc->isInternal());
+        $this->assertTrue($doc->isUserDefined());
+        $this->assertFalse($doc->isVariatic());
     }
 
     public function testGetMethodDoc()
@@ -73,9 +89,15 @@ class PhpDocFactoryTest extends TestCase
         $doc = $factory->getMethodDoc(TestClass::class, 'method1');
         $this->assertInstanceOf(MethodDocBlock::class, $doc);
         $this->assertEquals('My method.', $doc->getTitle());
+        $this->assertEquals('Berlioz\PhpDoc\Tests\files\TestClass', $doc->getClassName());
         $this->assertTrue($doc->isPublic());
         $this->assertFalse($doc->isPrivate());
+        $this->assertFalse($doc->isProtected());
         $this->assertFalse($doc->isAbstract());
+        $this->assertFalse($doc->isConstructor());
+        $this->assertFalse($doc->isDestructor());
+        $this->assertFalse($doc->isStatic());
+        $this->assertFalse($doc->isFinal());
 
         /** @var \Berlioz\PhpDoc\Tag\ParamTag[] $tags */
         $this->assertCount(3, $tags = $doc->getTag('param'));
@@ -97,6 +119,20 @@ class PhpDocFactoryTest extends TestCase
         $doc = $factory->getClassDoc(TestClass::class);
         $this->assertInstanceOf(ClassDocBlock::class, $doc);
         $this->assertEquals('Class TestClass.', $doc->getTitle());
+        $this->assertEquals('Berlioz\PhpDoc\Tests\files\TestClass', $doc->getName());
+        $this->assertEquals('Berlioz\PhpDoc\Tests\files', $doc->getNamespaceName());
+        $this->assertEquals('TestClass', $doc->getShortName());
+        $this->assertFalse($doc->isAbstract());
+        $this->assertFalse($doc->isFinal());
+        $this->assertFalse($doc->isInternal());
+        $this->assertTrue($doc->isUserDefined());
+        $this->assertFalse($doc->isAnonymous());
+        $this->assertTrue($doc->isCloneable());
+        $this->assertTrue($doc->isInstantiable());
+        $this->assertFalse($doc->isInterface());
+        $this->assertFalse($doc->isIterable());
+        $this->assertFalse($doc->isIterateable());
+        $this->assertFalse($doc->isTrait());
     }
 
     public function testGetFromReflection()
@@ -118,6 +154,15 @@ class PhpDocFactoryTest extends TestCase
         $doc = $factory->getPropertyDoc(TestClass::class, 'property1');
         $this->assertInstanceOf(PropertyDocBlock::class, $doc);
         $this->assertEquals('Property 1.', $doc->getTitle());
+        $this->assertEquals('Berlioz\PhpDoc\Tests\files\TestClass::$property1', $doc->getName());
+        $this->assertEquals('Berlioz\PhpDoc\Tests\files\TestClass', $doc->getClassName());
+        $this->assertEquals('Berlioz\PhpDoc\Tests\files', $doc->getNamespaceName());
+        $this->assertEquals('property1', $doc->getShortName());
+        $this->assertFalse($doc->isStatic());
+        $this->assertFalse($doc->isPublic());
+        $this->assertFalse($doc->isProtected());
+        $this->assertTrue($doc->isPrivate());
+        $this->assertTrue($doc->isDefault());
     }
 
     public function testGetClassDocs()

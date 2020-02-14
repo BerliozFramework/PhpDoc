@@ -16,6 +16,11 @@ namespace Berlioz\PhpDoc\Tag;
 
 use Berlioz\PhpDoc\Tag;
 
+/**
+ * Class VarTag.
+ *
+ * @package Berlioz\PhpDoc\Tag
+ */
 class VarTag extends Tag
 {
     /** @var string|null Variable title */
@@ -38,13 +43,15 @@ class VarTag extends Tag
     protected function parseValue()
     {
         $matches = [];
-        if (preg_match('/^\s*(?<type>[\w\|\\\[\]]+)(?:\s+(?<title>.+))?\s*$/i', $this->raw, $matches) === 1) {
-            $this->varType = $matches['type'];
-            $this->varTitle = $matches['title'] ?? null;
+        if (preg_match('/^\s*(?<type>[\w\|\\\[\]]+)(?:\s+(?<title>.+))?\s*$/i', $this->raw, $matches) !== 1) {
+            return;
+        }
 
-            if (stripos($this->varType, '|') !== false) {
-                $this->varType = explode('|', $this->varType);
-            }
+        $this->varType = $matches['type'];
+        $this->varTitle = $matches['title'] ?? null;
+
+        if (stripos($this->varType, '|') !== false) {
+            $this->varType = explode('|', $this->varType);
         }
     }
 

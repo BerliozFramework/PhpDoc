@@ -14,6 +14,11 @@ declare(strict_types=1);
 
 namespace Berlioz\PhpDoc;
 
+/**
+ * Class DocBlock.
+ *
+ * @package Berlioz\PhpDoc
+ */
 class DocBlock
 {
     /** @var string|null Title */

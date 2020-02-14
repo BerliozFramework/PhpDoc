@@ -14,6 +14,13 @@ declare(strict_types=1);
 
 namespace Berlioz\PhpDoc\Exception;
 
-class PhpDocException extends \Exception
+use Exception;
+
+/**
+ * Class PhpDocException.
+ *
+ * @package Berlioz\PhpDoc\Exception
+ */
+class PhpDocException extends Exception
 {
 }

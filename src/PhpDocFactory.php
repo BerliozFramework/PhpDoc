@@ -19,25 +19,25 @@ use Berlioz\PhpDoc\DocBlock\FunctionDocBlock;
 use Berlioz\PhpDoc\DocBlock\MethodDocBlock;
 use Berlioz\PhpDoc\DocBlock\PropertyDocBlock;
 use Berlioz\PhpDoc\Exception\PhpDocException;
+use Exception;
 use Psr\Log\LoggerInterface;
 use Psr\Log\LogLevel;
 use Psr\SimpleCache\CacheInterface;
+use ReflectionClass;
+use ReflectionFunction;
+use ReflectionMethod;
+use ReflectionProperty;
+use Reflector;
 
+/**
+ * Class PhpDocFactory.
+ *
+ * @package Berlioz\PhpDoc
+ */
 class PhpDocFactory
 {
-    // Filters
-    const FILTER_INTERNAL = 1;
-    const FILTER_USER_DEFINED = 2;
-    const FILTER_METHOD_PRIVATE = 4;
-    const FILTER_METHOD_PROTECTED = 8;
-    const FILTER_METHOD_PUBLIC = 16;
-    const FILTER_METHOD_ABSTRACT = 32;
-    const FILTER_METHOD_FINAL = 64;
-    const FILTER_METHOD_STATIC = 128;
-    const FILTER_METHOD_CONSTRUCTOR = 256;
-    const FILTER_METHOD_DESTRUCTOR = 512;
     // Cache
-    const CACHE_KEY_INDEX = '_BERLIOZ_PHPDOC';
+    protected const CACHE_KEY_INDEX = '_BERLIOZ_PHPDOC';
     /** @var \Psr\SimpleCache\CacheInterface|null Cache */
     private $cacheManager;
     /** @var \Psr\Log\LoggerInterface|null Logger */
@@ -53,7 +53,7 @@ class PhpDocFactory
      * PhpDocFactory constructor.
      *
      * @param null|\Psr\SimpleCache\CacheInterface $cacheManager
-     * @param null|\Psr\Log\LoggerInterface        $logger
+     * @param null|\Psr\Log\LoggerInterface $logger
      */
     public function __construct(?CacheInterface $cacheManager = null, ?LoggerInterface $logger = null)
     {
@@ -85,19 +85,23 @@ class PhpDocFactory
     /**
      * Logs with an arbitrary level.
      *
-     * @param mixed  $level
+     * @param mixed $level
      * @param string $message
-     * @param array  $context
+     * @param array $context
      *
      * @return void
      */
     private function log($level, string $message, array $context = [])
     {
-        if (!is_null($this->logger)) {
-            $this->logger->log($level,
-                               sprintf('{class} / %s', $message),
-                               array_merge($context, ['class' => __CLASS__]));
+        if (null === $this->logger) {
+            return;
         }
+
+        $this->logger->log(
+            $level,
+            sprintf('{class} / %s', $message),
+            array_merge($context, ['class' => __CLASS__])
+        );
     }
 
     /**
@@ -107,8 +111,8 @@ class PhpDocFactory
      */
     public function getParser(): Parser
     {
-        if (is_null($this->parser)) {
-            $this->parser = new Parser;
+        if (null === $this->parser) {
+            $this->parser = new Parser();
         }
 
         return $this->parser;
@@ -122,20 +126,24 @@ class PhpDocFactory
      */
     public function getIndex(): array
     {
-        if (is_null($this->_index)) {
+        if (null !== $this->_index) {
+            return $this->_index;
+        }
+
+        if (null === $this->cacheManager) {
+            return [];
+        }
+
+        // Log
+        $this->log(LogLevel::DEBUG, 'Get index from cache');
+
+        $this->_index = $this->cacheManager->get(sprintf('%s_INDEX', static::CACHE_KEY_INDEX), []);
+
+        if (!is_array($this->_index)) {
             $this->_index = [];
 
-            if (!is_null($this->cacheManager)) {
-                if (!is_array($this->_index = $this->cacheManager->get(sprintf('%s_INDEX', static::CACHE_KEY_INDEX), []))) {
-                    $this->_index = [];
-
-                    // Log
-                    $this->log(LogLevel::WARNING, 'Not valid index from cache');
-                } else {
-                    // Log
-                    $this->log(LogLevel::DEBUG, 'Get index from cache');
-                }
-            }
+            // Log
+            $this->log(LogLevel::WARNING, 'Not valid index from cache');
         }
 
         return $this->_index;
@@ -149,12 +157,14 @@ class PhpDocFactory
      */
     private function saveIndex(): PhpDocFactory
     {
-        if (!is_null($this->cacheManager)) {
-            $this->cacheManager->set(sprintf('%s_INDEX', static::CACHE_KEY_INDEX), $this->_index);
-
-            // Log
-            $this->log(LogLevel::DEBUG, 'Save index in cache');
+        if (null === $this->cacheManager) {
+            return $this;
         }
+
+        $this->cacheManager->set(sprintf('%s_INDEX', static::CACHE_KEY_INDEX), $this->_index);
+
+        // Log
+        $this->log(LogLevel::DEBUG, 'Save index in cache');
 
         return $this;
     }
@@ -185,16 +195,20 @@ class PhpDocFactory
             return $this->_docs[$name];
         }
 
-        if (!is_null($this->cacheManager)) {
-            $cacheKey = $this->getDocCacheName($name);
-            if ($this->cacheManager->has($cacheKey)) {
-                if (($doc = $this->cacheManager->get($cacheKey)) instanceof DocBlock) {
-                    // Log
-                    $this->log(LogLevel::DEBUG, sprintf('Get doc "%s" from cache', $name));
+        if (null === $this->cacheManager) {
+            return null;
+        }
 
-                    return $doc;
-                }
-            }
+        $cacheKey = $this->getDocCacheName($name);
+        if (!$this->cacheManager->has($cacheKey)) {
+            return null;
+        }
+
+        if (($doc = $this->cacheManager->get($cacheKey)) instanceof DocBlock) {
+            // Log
+            $this->log(LogLevel::DEBUG, sprintf('Get doc "%s" from cache', $name));
+
+            return $doc;
         }
 
         return null;
@@ -203,7 +217,7 @@ class PhpDocFactory
     /**
      * Save doc in cache.
      *
-     * @param string                        $name
+     * @param string $name
      * @param \Berlioz\PhpDoc\DocBlock|null $value
      *
      * @return \Berlioz\PhpDoc\PhpDocFactory
@@ -211,16 +225,18 @@ class PhpDocFactory
      */
     private function saveDocToCache(string $name, ?DocBlock $value): PhpDocFactory
     {
-        if (!is_null($this->cacheManager)) {
+        if (null !== $this->cacheManager) {
             $cacheKey = $this->getDocCacheName($name);
 
-            if (!is_null($value)) {
+            if (null === $value) {
+                $this->cacheManager->has($cacheKey) && $this->cacheManager->delete($cacheKey);
+            }
+
+            if (null !== $value) {
                 $this->cacheManager->set($cacheKey, $value);
 
                 // Log
                 $this->log(LogLevel::DEBUG, sprintf('Save doc "%s" in cache', $name));
-            } else {
-                $this->cacheManager->has($cacheKey) && $this->cacheManager->delete($cacheKey);
             }
         }
 
@@ -251,14 +267,20 @@ class PhpDocFactory
     public function getFunctionDoc(string $function): FunctionDocBlock
     {
         // Get from cache
-        if (is_null($doc = $this->getDocFromCache($function)) || !($doc instanceof FunctionDocBlock)) {
-            try {
-                $reflection = new \ReflectionFunction($function);
-            } catch (\Exception $e) {
-                throw new PhpDocException(sprintf('Unable to do reflection of function "%s"', $function));
+        if (null !== ($doc = $this->getDocFromCache($function))) {
+            if ($doc instanceof FunctionDocBlock) {
+                return $doc;
             }
-            $doc = $this->getFromReflection($reflection);
         }
+
+        try {
+            $reflection = new ReflectionFunction($function);
+        } catch (Exception $e) {
+            throw new PhpDocException(sprintf('Unable to do reflection of function "%s"', $function));
+        }
+
+        /** @var \Berlioz\PhpDoc\DocBlock\FunctionDocBlock $doc */
+        $doc = $this->getFromReflection($reflection);
 
         return $doc;
     }
@@ -275,23 +297,29 @@ class PhpDocFactory
     public function getClassDoc(string $class): ClassDocBlock
     {
         // Get from cache
-        if (is_null($doc = $this->getDocFromCache($class)) || !($doc instanceof ClassDocBlock)) {
-            try {
-                $reflection = new \ReflectionClass($class);
-            } catch (\Exception $e) {
-                throw new PhpDocException(sprintf('Unable to do reflection of class "%s"', $class));
+        if (null !== ($doc = $this->getDocFromCache($class))) {
+            if ($doc instanceof ClassDocBlock) {
+                return $doc;
             }
-            $doc = $this->getFromReflection($reflection);
+        }
 
-            // Get all properties
-            foreach ($reflection->getProperties() as $reflectionProperty) {
-                $this->getFromReflection($reflectionProperty);
-            }
+        try {
+            $reflection = new ReflectionClass($class);
+        } catch (Exception $e) {
+            throw new PhpDocException(sprintf('Unable to do reflection of class "%s"', $class));
+        }
 
-            // Get all methods
-            foreach ($reflection->getMethods() as $reflectionMethod) {
-                $this->getFromReflection($reflectionMethod);
-            }
+        /** @var \Berlioz\PhpDoc\DocBlock\ClassDocBlock $doc */
+        $doc = $this->getFromReflection($reflection);
+
+        // Get all properties
+        foreach ($reflection->getProperties() as $reflectionProperty) {
+            $this->getFromReflection($reflectionProperty);
+        }
+
+        // Get all methods
+        foreach ($reflection->getMethods() as $reflectionMethod) {
+            $this->getFromReflection($reflectionMethod);
         }
 
         return $doc;
@@ -300,7 +328,7 @@ class PhpDocFactory
     /**
      * Get property PhpDoc.
      *
-     * @param string $class    Class name
+     * @param string $class Class name
      * @param string $property Property name
      *
      * @return \Berlioz\PhpDoc\DocBlock\PropertyDocBlock
@@ -312,14 +340,20 @@ class PhpDocFactory
         $fullName = sprintf('%s::$%s', $class, $property);
 
         // Get from cache
-        if (is_null($doc = $this->getDocFromCache($fullName)) || !($doc instanceof PropertyDocBlock)) {
-            try {
-                $reflection = new \ReflectionProperty($class, $property);
-            } catch (\Exception $e) {
-                throw new PhpDocException(sprintf('Unable to do reflection of property "%s"', $fullName));
+        if (null !== ($doc = $this->getDocFromCache($fullName))) {
+            if ($doc instanceof PropertyDocBlock) {
+                return $doc;
             }
-            $doc = $this->getFromReflection($reflection);
         }
+
+        try {
+            $reflection = new ReflectionProperty($class, $property);
+        } catch (Exception $e) {
+            throw new PhpDocException(sprintf('Unable to do reflection of property "%s"', $fullName));
+        }
+
+        /** @var \Berlioz\PhpDoc\DocBlock\PropertyDocBlock $doc */
+        $doc = $this->getFromReflection($reflection);
 
         return $doc;
     }
@@ -327,7 +361,7 @@ class PhpDocFactory
     /**
      * Get method PhpDoc.
      *
-     * @param string $class  Class name
+     * @param string $class Class name
      * @param string $method Method name
      *
      * @return \Berlioz\PhpDoc\DocBlock\MethodDocBlock
@@ -339,14 +373,20 @@ class PhpDocFactory
         $fullName = sprintf('%s::%s', $class, $method);
 
         // Get from cache
-        if (is_null($doc = $this->getDocFromCache($fullName)) || !($doc instanceof MethodDocBlock)) {
-            try {
-                $reflection = new \ReflectionMethod($class, $method);
-            } catch (\Exception $e) {
-                throw new PhpDocException(sprintf('Unable to do reflection of method "%s"', $fullName));
+        if (null !== ($doc = $this->getDocFromCache($fullName))) {
+            if ($doc instanceof MethodDocBlock) {
+                return $doc;
             }
-            $doc = $this->getFromReflection($reflection);
         }
+
+        try {
+            $reflection = new ReflectionMethod($class, $method);
+        } catch (Exception $e) {
+            throw new PhpDocException(sprintf('Unable to do reflection of method "%s"', $fullName));
+        }
+
+        /** @var \Berlioz\PhpDoc\DocBlock\MethodDocBlock $doc */
+        $doc = $this->getFromReflection($reflection);
 
         return $doc;
     }
@@ -367,9 +407,11 @@ class PhpDocFactory
         $docs = [$classDoc->getName() => $classDoc];
 
         foreach ($this->getIndex() as $indexEntry) {
-            if (sprintf('%s::', $classDoc->getName()) == substr($indexEntry, 0, $classNameLength + 2)) {
-                $docs[$indexEntry] = $this->getDocFromCache($indexEntry);
+            if (sprintf('%s::', $classDoc->getName()) != substr($indexEntry, 0, $classNameLength + 2)) {
+                continue;
             }
+
+            $docs[$indexEntry] = $this->getDocFromCache($indexEntry);
         }
 
         return $docs;
@@ -384,28 +426,28 @@ class PhpDocFactory
      * @throws \Berlioz\PhpDoc\Exception\PhpDocException
      * @throws \Psr\SimpleCache\CacheException
      */
-    public function getFromReflection(\Reflector $reflection): DocBlock
+    public function getFromReflection(Reflector $reflection): DocBlock
     {
         $reflectionClass = get_class($reflection);
         $docBlockClass = null;
 
         switch ($reflectionClass) {
-            case \ReflectionFunction::class:
+            case ReflectionFunction::class:
                 $docBlockClass = FunctionDocBlock::class;
                 /** @var \ReflectionFunction $reflection */
                 $name = sprintf('%s\%s', $reflection->getNamespaceName(), $reflection->getName());
                 break;
-            case \ReflectionClass::class:
+            case ReflectionClass::class:
                 $docBlockClass = ClassDocBlock::class;
                 /** @var \ReflectionClass $reflection */
                 $name = $reflection->getName();
                 break;
-            case \ReflectionProperty::class:
+            case ReflectionProperty::class:
                 $docBlockClass = PropertyDocBlock::class;
                 /** @var \ReflectionMethod $reflection */
                 $name = sprintf('%s::$%s', $reflection->class, $reflection->getName());
                 break;
-            case \ReflectionMethod::class:
+            case ReflectionMethod::class:
                 $docBlockClass = MethodDocBlock::class;
                 /** @var \ReflectionProperty $reflection */
                 $name = sprintf('%s::%s', $reflection->class, $reflection->getName());
@@ -415,26 +457,30 @@ class PhpDocFactory
         }
 
         // Get from cache
-        if (is_null($doc = $this->getDocFromCache($name)) || !($doc instanceof DocBlock)) {
-            // Get doc comment
-            $docComment = $reflection->getDocComment();
-
-            // Parse doc comment
-            $docCommentParsed = $this->getParser()->parse($docComment ?: '');
-
-            // Group tags
-            $tags = [];
-            /** @var \Berlioz\PhpDoc\Tag $tag */
-            foreach ($docCommentParsed['tags'] as $tag) {
-                $tags[$tag->getName()][] = $tag;
+        if (null !== ($doc = $this->getDocFromCache($name))) {
+            if ($doc instanceof DocBlock) {
+                return $doc;
             }
-
-            // Create DocBlock class
-            $doc = new $docBlockClass($reflection, $docCommentParsed['title'], $docCommentParsed['description'], $tags);
-
-            // Save to cache
-            $this->saveDocToCache($name, $doc);
         }
+
+        // Get doc comment
+        $docComment = $reflection->getDocComment();
+
+        // Parse doc comment
+        $docCommentParsed = $this->getParser()->parse($docComment ?: '');
+
+        // Group tags
+        $tags = [];
+        /** @var \Berlioz\PhpDoc\Tag $tag */
+        foreach ($docCommentParsed['tags'] as $tag) {
+            $tags[$tag->getName()][] = $tag;
+        }
+
+        // Create DocBlock class
+        $doc = new $docBlockClass($reflection, $docCommentParsed['title'], $docCommentParsed['description'], $tags);
+
+        // Save to cache
+        $this->saveDocToCache($name, $doc);
 
         return $doc;
     }

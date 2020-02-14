@@ -14,6 +14,11 @@ declare(strict_types=1);
 
 namespace Berlioz\PhpDoc\Tag;
 
+/**
+ * Class ReturnTag.
+ *
+ * @package Berlioz\PhpDoc\Tag
+ */
 class ReturnTag extends VarTag
 {
 }

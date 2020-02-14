@@ -14,13 +14,18 @@ declare(strict_types=1);
 
 namespace Berlioz\PhpDoc;
 
+/**
+ * Interface TagInterface.
+ *
+ * @package Berlioz\PhpDoc
+ */
 interface TagInterface
 {
     /**
      * TagInterface constructor.
      *
-     * @param string      $name          Name of tag
-     * @param null|mixed  $value         Value of tag (parsed)
+     * @param string $name Name of tag
+     * @param null|mixed $value Value of tag (parsed)
      * @param null|string $originalValue Original value (if null, equal to the value parameter)
      */
     public function __construct(string $name, $value = null, ?string $originalValue = null);

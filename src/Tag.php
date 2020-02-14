@@ -14,6 +14,11 @@ declare(strict_types=1);
 
 namespace Berlioz\PhpDoc;
 
+/**
+ * Class Tag.
+ *
+ * @package Berlioz\PhpDoc
+ */
 class Tag implements TagInterface
 {
     /** @var string Name */
@@ -26,9 +31,9 @@ class Tag implements TagInterface
     /**
      * Tag constructor.
      *
-     * @param string      $name  Name of tag
-     * @param null|mixed  $value Value of tag (parsed)
-     * @param null|string $raw   Raw value (if null, equal to the value parameter)
+     * @param string $name Name of tag
+     * @param null|mixed $value Value of tag (parsed)
+     * @param null|string $raw Raw value (if null, equal to the value parameter)
      */
     public function __construct(string $name, $value = null, ?string $raw = null)
     {

@@ -14,6 +14,11 @@ declare(strict_types=1);
 
 namespace Berlioz\PhpDoc\Exception;
 
+/**
+ * Class ParserException.
+ *
+ * @package Berlioz\PhpDoc\Exception
+ */
 class ParserException extends PhpDocException
 {
 }

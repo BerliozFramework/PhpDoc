@@ -15,16 +15,23 @@ declare(strict_types=1);
 namespace Berlioz\PhpDoc\DocBlock;
 
 use Berlioz\PhpDoc\DocBlock;
+use ReflectionFunctionAbstract;
+use ReflectionMethod;
 
+/**
+ * Class AbstractFunctionDocBlock.
+ *
+ * @package Berlioz\PhpDoc\DocBlock
+ */
 abstract class AbstractFunctionDocBlock extends DocBlock
 {
     // Constants
-    const IS_USER_DEFINED = 1;
-    const IS_INTERNAL = 2;
-    const IS_CLOSURE = 4;
-    const IS_DEPRECATED = 8;
-    const IS_GENERATOR = 16;
-    const IS_VARIATIC = 32;
+    protected const IS_USER_DEFINED = 1;
+    protected const IS_INTERNAL = 2;
+    protected const IS_CLOSURE = 4;
+    protected const IS_DEPRECATED = 8;
+    protected const IS_GENERATOR = 16;
+    protected const IS_VARIATIC = 32;
     /** @var int Properties */
     private $properties = 0;
     /** @var string Name of function */
@@ -38,15 +45,19 @@ abstract class AbstractFunctionDocBlock extends DocBlock
      * AbstractFunctionDocBlock constructor.
      *
      * @param \ReflectionFunctionAbstract $reflectionFunction
-     * @param null|string                 $title
-     * @param null|string                 $description
-     * @param array                       $tags
+     * @param null|string $title
+     * @param null|string $description
+     * @param array $tags
      */
-    public function __construct(\ReflectionFunctionAbstract $reflectionFunction, ?string $title, ?string $description, array $tags = [])
-    {
+    public function __construct(
+        ReflectionFunctionAbstract $reflectionFunction,
+        ?string $title,
+        ?string $description,
+        array $tags = []
+    ) {
         parent::__construct($title, $description, $tags);
 
-        if ($reflectionFunction instanceof \ReflectionMethod) {
+        if ($reflectionFunction instanceof ReflectionMethod) {
             $this->name = sprintf('%s::%s', $reflectionFunction->class, $reflectionFunction->getName());
             $this->namespaceName = $reflectionFunction->getDeclaringClass()->getNamespaceName();
         } else {
