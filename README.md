@@ -1,5 +1,11 @@
 # Berlioz PhpDoc
 
+[![Latest Version](https://img.shields.io/packagist/v/berlioz/php-doc.svg?style=flat-square)](https://github.com/BerliozFramework/PhpDoc/releases)
+[![Software license](https://img.shields.io/github/license/BerliozFramework/PhpDoc.svg?style=flat-square)](https://github.com/BerliozFramework/PhpDoc/blob/master/LICENSE)
+[![Build Status](https://img.shields.io/travis/com/BerliozFramework/PhpDoc/master.svg?style=flat-square)](https://travis-ci.com/BerliozFramework/PhpDoc)
+[![Quality Grade](https://img.shields.io/codacy/grade/ffd9c7991dae48f5bddb701d44285e76/master.svg?style=flat-square)](https://www.codacy.com/manual/BerliozFramework/PhpDoc)
+[![Total Downloads](https://img.shields.io/packagist/dt/berlioz/php-doc.svg?style=flat-square)](https://packagist.org/packages/berlioz/php-doc)
+
 **Berlioz PhpDoc** is a PHP library to read the documentations in code (classes, methods and functions) with advanced annotation interpretation.
 
 ## Installation
