@@ -1,6 +1,6 @@
 {
   "name": "berlioz/php-doc",
-  "description": "Berlioz PhpDoc",
+  "description": "Berlioz PhpDoc is a PHP library to read the documentations in code (classes, methods and functions) with advanced annotation interpretation.",
   "minimum-stability": "stable",
   "license": "MIT",
   "homepage": "https://getberlioz.com",
