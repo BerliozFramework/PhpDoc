@@ -23,11 +23,6 @@ use ReflectionFunction;
  */
 class FunctionDocBlock extends AbstractFunctionDocBlock
 {
-    // Constants
-    protected const IS_DISABLED = 1;
-    /** @var int Properties */
-    private $properties = 0;
-
     /**
      * FunctionDocBlock constructor.
      *
@@ -43,17 +38,5 @@ class FunctionDocBlock extends AbstractFunctionDocBlock
         array $tags = []
     ) {
         parent::__construct($reflectionFunction, $title, $description, $tags);
-
-        $this->properties = ($reflectionFunction->isDisabled() ? FunctionDocBlock::IS_DISABLED : 0);
-    }
-
-    /**
-     * Is disabled function?
-     *
-     * @return bool
-     */
-    public function isDisabled(): bool
-    {
-        return ($this->properties & FunctionDocBlock::IS_DISABLED) == FunctionDocBlock::IS_DISABLED;
     }
 }

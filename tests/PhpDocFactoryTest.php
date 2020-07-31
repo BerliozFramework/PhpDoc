@@ -60,7 +60,6 @@ class PhpDocFactoryTest extends TestCase
         $this->assertInstanceOf(FunctionDocBlock::class, $doc);
         $this->assertEquals('Function test.', $doc->getTitle());
         $this->assertEquals('\test', $doc->getName());
-        $this->assertFalse($doc->isDisabled());
         $this->assertFalse($doc->isClosure());
         $this->assertFalse($doc->isDeprecated());
         $this->assertFalse($doc->isGenerator());
@@ -74,7 +73,6 @@ class PhpDocFactoryTest extends TestCase
         $this->assertEquals('Berlioz\PhpDoc\Tests\files\test', $doc->getName());
         $this->assertEquals('Berlioz\PhpDoc\Tests\files', $doc->getNamespaceName());
         $this->assertEquals('test', $doc->getShortName());
-        $this->assertFalse($doc->isDisabled());
         $this->assertFalse($doc->isClosure());
         $this->assertFalse($doc->isDeprecated());
         $this->assertFalse($doc->isGenerator());
