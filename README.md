@@ -20,7 +20,7 @@ $ composer require berlioz/php-doc
 
 ### Dependencies
 
-* **PHP** >= 7.1
+* **PHP** ^7.1 || ^8.0
 * Packages:
   * **psr/simple-cache**
   * **psr/log**
